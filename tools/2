@@ -1,0 +1,189 @@
+import os
+import re
+
+offset_adjustment = 0
+modify_bytes_count = 4
+
+def dec_to_hex(num):
+    try:
+        hex_str = format(num, '08X')
+        return hex_str[6:8] + hex_str[4:6] + hex_str[2:4] + hex_str[0:2]
+    except Exception as e:
+        print(f"转换十进制到十六进制时发生错误: {e}")
+        return None
+
+def process_config_file(filename):
+    try:
+        processed_lines = []
+        with open(filename, 'r', encoding='utf-8') as file:
+            for line in file:
+                
+                line = line.split('#')[0].strip()
+                
+                if not line:
+                    continue              
+                if re.match(r'^\d+\s+\d+$', line):
+                    processed_lines.append(line)
+                    continue               
+                if "[" in line and "]" in line:
+                    start = line.find("[") + 1
+                    end = line.find("]")
+                    numbers = line[start:end].split(",")
+                    if len(numbers) == 2:
+                        num1, num2 = numbers[0].strip(), numbers[1].strip()
+                        processed_lines.append(f"{num1} {num2}")
+                        continue
+                processed_line = re.sub(r'[^\d\s]', '', line)
+                if processed_line.strip():  # 确保清理后行不为空
+                    processed_lines.append(processed_line.strip())
+        return processed_lines
+    except Exception as e:
+        print(f"无法读取配置文件 {filename}: {e}")
+        return []
+
+def read_file_content(file_path):
+    try:
+        with open(file_path, "rb") as file:
+            return bytearray(file.read())
+    except Exception as e:
+        print(f"无法读取文件 {file_path}: {e}")
+        return None
+
+def find_hex_sequence(file_content, hex_sequence):
+    offsets = []
+    start = 0
+    sequence_bytes = bytes.fromhex(hex_sequence)
+    while start < len(file_content):
+        offset = file_content.find(sequence_bytes, start)
+        if offset == -1:
+            break
+        offsets.append(offset)
+        start = offset + len(sequence_bytes)
+    return offsets
+
+def replace_bytes(file_path, offset, new_bytes):
+    try:
+        with open(file_path, "r+b") as file:
+            file.seek(offset)
+            file.write(new_bytes)
+    except Exception as e:
+        print(f"无法写入文件 {file_path}: {e}")
+
+def process_target_files(config_data, target_file_path):
+    if not config_data:
+        print(f"错误: 配置文件数据为空，无法处理文件 {target_file_path}")
+        return 0, 0, 0
+
+    file_content = read_file_content(target_file_path)
+    if file_content is None:
+        return 0, 0, 0
+
+    total_pairs = found_count = not_found_count = 0
+
+    for line in config_data:
+        pairs = line.split()
+        if len(pairs) != 2:
+            continue
+
+        total_pairs += 1
+        try:
+            cleaned_pairs = [re.sub(r'\D', '', pair) for pair in pairs]
+            hex_pair1, hex_pair2 = map(lambda x: dec_to_hex(int(x)), cleaned_pairs)
+        except ValueError as e:
+            print(f"配置文件中的一行无法转换为整数: {pairs}. 错误: {e}")
+            not_found_count += 1
+            continue
+
+        if hex_pair1 is None or hex_pair2 is None:
+            continue
+
+        offsets1, offsets2 = find_hex_sequence(file_content, hex_pair1), find_hex_sequence(file_content, hex_pair2)
+
+        if offsets1 and offsets2:
+            for offset1, offset2 in zip(offsets1, offsets2):
+                start_pos1 = max(offset1 - offset_adjustment, 0)
+                start_pos2 = max(offset2 - offset_adjustment, 0)
+                prev_bytes1 = file_content[start_pos1:start_pos1 + modify_bytes_count]
+                prev_bytes2 = file_content[start_pos2:start_pos2 + modify_bytes_count]
+                replace_bytes(target_file_path, start_pos1, prev_bytes2)
+                replace_bytes(target_file_path, start_pos2, prev_bytes1)
+            found_count += len(offsets1)
+        else:
+            not_found_count += 1
+
+    return total_pairs, found_count, not_found_count
+
+def print_intro():
+    intro = """
+    [启动成功]
+    正在加载配置文件...
+    选择并处理目标文件中..
+    注意：请把要一键美化的dat文件放入"打包dat"文件夹!!!
+    注意：请把要一键美化的dat文件放入"打包dat"文件夹!!!
+    注意：请把要一键美化的dat文件放入"打包dat"文件夹!!!
+    """
+    print(intro)
+
+def print_status_update(message):
+    print(f"[状态更新] {message}")
+
+def main():
+    print_intro()
+
+    target_dir = os.path.abspath(os.path.join(os.getcwd(), "打包dat"))
+    config_dir = os.path.abspath(os.path.join(os.getcwd(), "配置文件"))
+    
+    if not os.path.exists(target_dir):
+        print(f"错误: 找不到目录 {target_dir}")
+        return
+    
+    if not os.path.exists(config_dir):
+        print(f"错误: 找不到配置文件目录 {config_dir}")
+        return
+    
+    supported_extensions = ['.h', '.py', '.txt']
+    config_files = [f for f in os.listdir(config_dir) if any(f.endswith(ext) for ext in supported_extensions)]
+    
+    if not config_files:
+        print(f"错误: 配置文件目录 {config_dir} 中没有找到支持的配置文件")
+        return
+    
+    print("[配置文件列表] 请选择配置文件：")
+    for i, config_file in enumerate(config_files, start=1):
+        print(f"{i}. {config_file}")
+    
+    while True:
+        try:
+            choice = int(input("请输入配置文件编号: "))
+            if choice < 1 or choice > len(config_files):
+                print("错误: 选择无效，请重新选择")
+            else:
+                break
+        except ValueError:
+            print("错误: 输入无效，请输入数字")
+    
+    config_file_path = os.path.join(config_dir, config_files[choice - 1])
+
+    config_data = process_config_file(config_file_path)
+    if not config_data:
+        print("错误: 配置文件处理失败")
+        return
+
+    total_pairs = total_found = total_not_found = 0
+
+    print_status_update("开始处理文件...请稍候")
+
+    for root, dirs, files in os.walk(target_dir):
+        for filename in files:
+            if filename.endswith(('.dat', '.uexp')):
+                target_file_path = os.path.join(root, filename)
+                pairs, found, not_found = process_target_files(config_data, target_file_path)
+                total_pairs += pairs
+                total_found += found
+                total_not_found += not_found
+
+    print(f"\n[处理完成] 一共 {total_pairs} 对，成功修改: {total_found} 对，未找到: {total_not_found} 对\n")
+    print("[任务完成] 已成功处理文件。")
+
+if __name__ == "__main__":
+    main()

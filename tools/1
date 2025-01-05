@@ -1,0 +1,56 @@
+import os
+import shutil
+
+def search_and_organize(unpack_dir, hex_values, folder_names):
+    if not os.path.exists(unpack_dir):
+        return
+
+    hex_folder_map = dict(zip(hex_values, folder_names))
+    hex_bytes_list = {hv: bytes.fromhex(hv.replace(" ", "")) for hv in hex_values}
+
+    for folder_name in folder_names:
+        os.makedirs(target_folder := os.path.join(unpack_dir, folder_name), exist_ok=True)
+
+    for root, _, files in os.walk(unpack_dir):
+        for file in files:
+            file_path = os.path.join(root, file)
+            try:
+                if any(file_path.startswith(os.path.join(unpack_dir, fn)) for fn in folder_names):
+                    continue
+                
+                with open(file_path, 'rb') as f:
+                    file_content = f.read()
+
+                for hex_value, hex_bytes in hex_bytes_list.items():
+                    if hex_bytes in file_content:
+                        target_folder = os.path.join(unpack_dir, hex_folder_map[hex_value])
+                        shutil.move(file_path, target_folder)
+                        break
+                else:
+                    os.remove(file_path)
+            except Exception as e:
+                pass
+
+    for root_folder in os.listdir(unpack_dir):
+        folder_path = os.path.join(unpack_dir, root_folder)
+        if os.path.isdir(folder_path) and root_folder not in folder_names:
+            try:
+                shutil.rmtree(folder_path)
+            except Exception as e:
+                pass
+
+if __name__ == "__main__":
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    parent_dir = os.path.dirname(current_dir)
+    unpack_folder = os.path.join(parent_dir, "解包dat")
+    
+    search_and_organize(
+        unpack_folder,
+        [
+            '506C61795F55495F45717569',
+            '42505F334449434F4E5F476F',
+            '42505F5745505F50',
+            '47616D652F417274732F55492F5461626C6549636F6E732F4974656D49636F6E2F43757272656E63792F5461736B5F69636F6E5F42505F3132382E'
+        ],
+        ['载具衣服武器', '这个没用了', '这个也没用', '查看代码的']
+    )

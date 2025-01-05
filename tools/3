@@ -1,0 +1,33 @@
+import os
+import shutil
+
+def search_and_move_files(source_dir, hex_patterns):
+    for root, dirs, files in os.walk(source_dir):
+        for file in files:
+            file_path = os.path.join(root, file)
+            try:
+                with open(file_path, 'rb') as f:
+                    file_data = f.read()
+                    matched = False
+                    for hex_pattern in hex_patterns:
+                        if hex_pattern in file_data:
+                            matched = True
+                            break
+                    if not matched:
+                        os.remove(file_path)
+            except Exception as e:
+                pass
+
+if __name__ == "__main__":
+    source_dir = './解包uexp'
+    if not os.path.exists(source_dir):
+        print(f"源目录 {source_dir} 不存在!")
+    else:
+        hex_patterns = [
+            bytes.fromhex('841D9A00'),
+            bytes.fromhex('25922100'),
+            bytes.fromhex('0B270600'),
+            bytes.fromhex('73BB0A00'),
+            bytes.fromhex('11723200')
+        ]
+        search_and_move_files(source_dir, hex_patterns)
