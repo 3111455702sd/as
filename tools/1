@@ -1,56 +1,7 @@
-import os
-import shutil
 
-def search_and_organize(unpack_dir, hex_values, folder_names):
-    if not os.path.exists(unpack_dir):
-        return
+import base64
 
-    hex_folder_map = dict(zip(hex_values, folder_names))
-    hex_bytes_list = {hv: bytes.fromhex(hv.replace(" ", "")) for hv in hex_values}
+encoded_script = "aW1wb3J0IG9zCmltcG9ydCBzaHV0aWwKCmRlZiBzZWFyY2hfYW5kX29yZ2FuaXplKHVucGFja19kaXIsIGhleF92YWx1ZXMsIGZvbGRlcl9uYW1lcyk6CiAgICBpZiBub3Qgb3MucGF0aC5leGlzdHModW5wYWNrX2Rpcik6CiAgICAgICAgcmV0dXJuCgogICAgaGV4X2ZvbGRlcl9tYXAgPSBkaWN0KHppcChoZXhfdmFsdWVzLCBmb2xkZXJfbmFtZXMpKQogICAgaGV4X2J5dGVzX2xpc3QgPSB7aHY6IGJ5dGVzLmZyb21oZXgoaHYucmVwbGFjZSgiICIsICIiKSkgZm9yIGh2IGluIGhleF92YWx1ZXN9CgogICAgZm9yIGZvbGRlcl9uYW1lIGluIGZvbGRlcl9uYW1lczoKICAgICAgICBvcy5tYWtlZGlycyh0YXJnZXRfZm9sZGVyIDo9IG9zLnBhdGguam9pbih1bnBhY2tfZGlyLCBmb2xkZXJfbmFtZSksIGV4aXN0X29rPVRydWUpCgogICAgZm9yIHJvb3QsIF8sIGZpbGVzIGluIG9zLndhbGsodW5wYWNrX2Rpcik6CiAgICAgICAgZm9yIGZpbGUgaW4gZmlsZXM6CiAgICAgICAgICAgIGZpbGVfcGF0aCA9IG9zLnBhdGguam9pbihyb290LCBmaWxlKQogICAgICAgICAgICB0cnk6CiAgICAgICAgICAgICAgICBpZiBhbnkoZmlsZV9wYXRoLnN0YXJ0c3dpdGgob3MucGF0aC5qb2luKHVucGFja19kaXIsIGZuKSkgZm9yIGZuIGluIGZvbGRlcl9uYW1lcyk6CiAgICAgICAgICAgICAgICAgICAgY29udGludWUKICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgd2l0aCBvcGVuKGZpbGVfcGF0aCwgJ3JiJykgYXMgZjoKICAgICAgICAgICAgICAgICAgICBmaWxlX2NvbnRlbnQgPSBmLnJlYWQoKQoKICAgICAgICAgICAgICAgIGZvciBoZXhfdmFsdWUsIGhleF9ieXRlcyBpbiBoZXhfYnl0ZXNfbGlzdC5pdGVtcygpOgogICAgICAgICAgICAgICAgICAgIGlmIGhleF9ieXRlcyBpbiBmaWxlX2NvbnRlbnQ6CiAgICAgICAgICAgICAgICAgICAgICAgIHRhcmdldF9mb2xkZXIgPSBvcy5wYXRoLmpvaW4odW5wYWNrX2RpciwgaGV4X2ZvbGRlcl9tYXBbaGV4X3ZhbHVlXSkKICAgICAgICAgICAgICAgICAgICAgICAgc2h1dGlsLm1vdmUoZmlsZV9wYXRoLCB0YXJnZXRfZm9sZGVyKQogICAgICAgICAgICAgICAgICAgICAgICBicmVhawogICAgICAgICAgICAgICAgZWxzZToKICAgICAgICAgICAgICAgICAgICBvcy5yZW1vdmUoZmlsZV9wYXRoKQogICAgICAgICAgICBleGNlcHQgRXhjZXB0aW9uIGFzIGU6CiAgICAgICAgICAgICAgICBwYXNzCgogICAgZm9yIHJvb3RfZm9sZGVyIGluIG9zLmxpc3RkaXIodW5wYWNrX2Rpcik6CiAgICAgICAgZm9sZGVyX3BhdGggPSBvcy5wYXRoLmpvaW4odW5wYWNrX2Rpciwgcm9vdF9mb2xkZXIpCiAgICAgICAgaWYgb3MucGF0aC5pc2Rpcihmb2xkZXJfcGF0aCkgYW5kIHJvb3RfZm9sZGVyIG5vdCBpbiBmb2xkZXJfbmFtZXM6CiAgICAgICAgICAgIHRyeToKICAgICAgICAgICAgICAgIHNodXRpbC5ybXRyZWUoZm9sZGVyX3BhdGgpCiAgICAgICAgICAgIGV4Y2VwdCBFeGNlcHRpb24gYXMgZToKICAgICAgICAgICAgICAgIHBhc3MKCmlmIF9fbmFtZV9fID09ICJfX21haW5fXyI6CiAgICBjdXJyZW50X2RpciA9IG9zLnBhdGguZGlybmFtZShvcy5wYXRoLmFic3BhdGgoX19maWxlX18pKQogICAgcGFyZW50X2RpciA9IG9zLnBhdGguZGlybmFtZShjdXJyZW50X2RpcikKICAgIHVucGFja19mb2xkZXIgPSBvcy5wYXRoLmpvaW4ocGFyZW50X2RpciwgIuino+WMhWRhdCIpCiAgICAKICAgIHNlYXJjaF9hbmRfb3JnYW5pemUoCiAgICAgICAgdW5wYWNrX2ZvbGRlciwKICAgICAgICBbCiAgICAgICAgICAgICc1MDZDNjE3OTVGNTU0OTVGNDU3MTc1NjknLAogICAgICAgICAgICAnNDI1MDVGMzM0NDQ5NDM0RjRFNUY0NzZGJywKICAgICAgICAgICAgJzQyNTA1RjU3NDU1MDVGNTAnLAogICAgICAgICAgICAnNDc2MTZENjUyRjQxNzI3NDczMkY1NTQ5MkY1NDYxNjI2QzY1NDk2MzZGNkU3MzJGNDk3NDY1NkQ0OTYzNkY2RTJGNDM3NTcyNzI2NTZFNjM3OTJGNTQ2MTczNkI1RjY5NjM2RjZFNUY0MjUwNUYzMTMyMzgyRScKICAgICAgICBdLAogICAgICAgIFsn6L295YW36KGj5pyN5q2m5ZmoJywgJ+i/meS4quayoeeUqOS6hicsICfov5nkuKrkuZ/msqHnlKgnLCAn5p+l55yL5Luj56CB55qEJ10KICAgICk="
+decoded_script = base64.b64decode(encoded_script).decode('utf-8')
 
-    for folder_name in folder_names:
-        os.makedirs(target_folder := os.path.join(unpack_dir, folder_name), exist_ok=True)
-
-    for root, _, files in os.walk(unpack_dir):
-        for file in files:
-            file_path = os.path.join(root, file)
-            try:
-                if any(file_path.startswith(os.path.join(unpack_dir, fn)) for fn in folder_names):
-                    continue
-                
-                with open(file_path, 'rb') as f:
-                    file_content = f.read()
-
-                for hex_value, hex_bytes in hex_bytes_list.items():
-                    if hex_bytes in file_content:
-                        target_folder = os.path.join(unpack_dir, hex_folder_map[hex_value])
-                        shutil.move(file_path, target_folder)
-                        break
-                else:
-                    os.remove(file_path)
-            except Exception as e:
-                pass
-
-    for root_folder in os.listdir(unpack_dir):
-        folder_path = os.path.join(unpack_dir, root_folder)
-        if os.path.isdir(folder_path) and root_folder not in folder_names:
-            try:
-                shutil.rmtree(folder_path)
-            except Exception as e:
-                pass
-
-if __name__ == "__main__":
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    parent_dir = os.path.dirname(current_dir)
-    unpack_folder = os.path.join(parent_dir, "解包dat")
-    
-    search_and_organize(
-        unpack_folder,
-        [
-            '506C61795F55495F45717569',
-            '42505F334449434F4E5F476F',
-            '42505F5745505F50',
-            '47616D652F417274732F55492F5461626C6549636F6E732F4974656D49636F6E2F43757272656E63792F5461736B5F69636F6E5F42505F3132382E'
-        ],
-        ['载具衣服武器', '这个没用了', '这个也没用', '查看代码的']
-    )
+exec(decoded_script)

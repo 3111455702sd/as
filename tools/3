@@ -1,33 +1,7 @@
-import os
-import shutil
 
-def search_and_move_files(source_dir, hex_patterns):
-    for root, dirs, files in os.walk(source_dir):
-        for file in files:
-            file_path = os.path.join(root, file)
-            try:
-                with open(file_path, 'rb') as f:
-                    file_data = f.read()
-                    matched = False
-                    for hex_pattern in hex_patterns:
-                        if hex_pattern in file_data:
-                            matched = True
-                            break
-                    if not matched:
-                        os.remove(file_path)
-            except Exception as e:
-                pass
+import base64
 
-if __name__ == "__main__":
-    source_dir = './解包uexp'
-    if not os.path.exists(source_dir):
-        print(f"源目录 {source_dir} 不存在!")
-    else:
-        hex_patterns = [
-            bytes.fromhex('841D9A00'),
-            bytes.fromhex('25922100'),
-            bytes.fromhex('0B270600'),
-            bytes.fromhex('73BB0A00'),
-            bytes.fromhex('11723200')
-        ]
-        search_and_move_files(source_dir, hex_patterns)
+encoded_script = "aW1wb3J0IG9zCmltcG9ydCBzaHV0aWwKCmRlZiBzZWFyY2hfYW5kX21vdmVfZmlsZXMoc291cmNlX2RpciwgaGV4X3BhdHRlcm5zKToKICAgIGZvciByb290LCBkaXJzLCBmaWxlcyBpbiBvcy53YWxrKHNvdXJjZV9kaXIpOgogICAgICAgIGZvciBmaWxlIGluIGZpbGVzOgogICAgICAgICAgICBmaWxlX3BhdGggPSBvcy5wYXRoLmpvaW4ocm9vdCwgZmlsZSkKICAgICAgICAgICAgdHJ5OgogICAgICAgICAgICAgICAgd2l0aCBvcGVuKGZpbGVfcGF0aCwgJ3JiJykgYXMgZjoKICAgICAgICAgICAgICAgICAgICBmaWxlX2RhdGEgPSBmLnJlYWQoKQogICAgICAgICAgICAgICAgICAgIG1hdGNoZWQgPSBGYWxzZQogICAgICAgICAgICAgICAgICAgIGZvciBoZXhfcGF0dGVybiBpbiBoZXhfcGF0dGVybnM6CiAgICAgICAgICAgICAgICAgICAgICAgIGlmIGhleF9wYXR0ZXJuIGluIGZpbGVfZGF0YToKICAgICAgICAgICAgICAgICAgICAgICAgICAgIG1hdGNoZWQgPSBUcnVlCiAgICAgICAgICAgICAgICAgICAgICAgICAgICBicmVhawogICAgICAgICAgICAgICAgICAgIGlmIG5vdCBtYXRjaGVkOgogICAgICAgICAgICAgICAgICAgICAgICBvcy5yZW1vdmUoZmlsZV9wYXRoKQogICAgICAgICAgICBleGNlcHQgRXhjZXB0aW9uIGFzIGU6CiAgICAgICAgICAgICAgICBwYXNzCgppZiBfX25hbWVfXyA9PSAiX19tYWluX18iOgogICAgc291cmNlX2RpciA9ICcuL+ino+WMhXVleHAnCiAgICBpZiBub3Qgb3MucGF0aC5leGlzdHMoc291cmNlX2Rpcik6CiAgICAgICAgcHJpbnQoZiLmupDnm67lvZUge3NvdXJjZV9kaXJ9IOS4jeWtmOWcqCEiKQogICAgZWxzZToKICAgICAgICBoZXhfcGF0dGVybnMgPSBbCiAgICAgICAgICAgIGJ5dGVzLmZyb21oZXgoJzg0MUQ5QTAwJyksCiAgICAgICAgICAgIGJ5dGVzLmZyb21oZXgoJzI1OTIyMTAwJyksCiAgICAgICAgICAgIGJ5dGVzLmZyb21oZXgoJzBCMjcwNjAwJyksCiAgICAgICAgICAgIGJ5dGVzLmZyb21oZXgoJzczQkIwQTAwJyksCiAgICAgICAgICAgIGJ5dGVzLmZyb21oZXgoJzExNzIzMjAwJykKICAgICAgICBdCiAgICAgICAgc2VhcmNoX2FuZF9tb3ZlX2ZpbGVzKHNvdXJjZV9kaXIsIGhleF9wYXR0ZXJucyk="
+decoded_script = base64.b64decode(encoded_script).decode('utf-8')
+
+exec(decoded_script)
