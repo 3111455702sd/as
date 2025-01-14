@@ -1,120 +1,182 @@
-#!/usr/bin/env python3
-import base64
-import subprocess
-ENCODED_SCRIPT = """
-IyEvYmluL2Jhc2gKCkNZQU49J1wwMzNbMDszNm0nCk1BR0VOVEE9J1wwMzNbMTszNW0nClJFRD0n
-XDAzM1swOzMxbScKR1JFRU49J1wwMzNbMTszMm0nCllFTExPVz0nXDAzM1sxOzMzbScKQkxVRT0n
-XDAzM1sxOzM0bScKV0hJVEU9J1wwMzNbMTszN20nCkJPTEQ9J1wwMzNbMW0nClVOREVSTElORT0n
-XDAzM1s0bScKTkM9J1wwMzNbMG0nCgpCQUNLR1JPVU5EPSdcMDMzWzQ4OzU7MTZtJwpURVhUX1dI
-SVRFPSdcMDMzWzM4OzU7MTVtJwpURVhUX0JMVUU9J1wwMzNbMzg7NTsyN20nCkJJR19GT05UPSdc
-MDMzWzE7MzdtXDAzM1sxOzRtJwoKZ3JhZGllbnRfaGVhZGVyKCkgewogICAgZWNobyAtZSAiJHtC
-QUNLR1JPVU5EfSR7VEVYVF9CTFVFfSR7QklHX0ZPTlR9KOOBpSDil4/ilIDil48gKeOBpSR7TkN9
-IgogICAgZWNobyAtZSAiJHtCQUNLR1JPVU5EfSR7VEVYVF9CTFVFfSR7QklHX0ZPTlR9ICAgIOWS
-jOW5s+eyvuiLsee+juWMluWItuS9nOW3peWFtyAgICAke05DfSIKICAgIGVjaG8gLWUgIiR7QkFD
-S0dST1VORH0ke1RFWFRfQkxVRX0ke0JJR19GT05UfT09PT09PT09PT09PT09PT09PT09PT09PT09
-PT09PSR7TkN9Igp9Cgppbml0aWFsaXplX2ZvbGRlcnMoKSB7CiAgICBta2RpciAtcCAuL3BhayAu
-L3Rvb2xzIC4v6Kej5YyFZGF0IC4v6Kej5YyFdWV4cCAuL+aJk+WMhWRhdCAuL+aJk+WMhXVleHAK
-fQoKZ2V0X3Bha19maWxlcygpIHsKICAgIHBha19maWxlcz0oJChscyAuL3Bhay8qLnBhayAyPi9k
-ZXYvbnVsbCkpCiAgICBpZiBbICR7I3Bha19maWxlc1tAXX0gLWVxIDAgXTsgdGhlbgogICAgICAg
-IGVjaG8gLWUgIiR7UkVEfSR7Qk9MRH3lvZPliY3msqHmnIkgUEFLIOaWh+S7tu+8gSR7TkN9Igog
-ICAgICAgIHJldHVybiAxCiAgICBlbGlmIFsgJHsjcGFrX2ZpbGVzW0BdfSAtZXEgMSBdOyB0aGVu
-CiAgICAgICAgc2VsZWN0ZWRfcGFrPSIke3Bha19maWxlc1swXX0iCiAgICAgICAgZWNobyAtZSAi
-JHtZRUxMT1d9JHtCT0xEfeiHquWKqOmAieaLqeWUr+S4gOeahCBQQUsg5paH5Lu2OiAke3NlbGVj
-dGVkX3BhayMjKi99JHtOQ30iCiAgICAgICAgcmV0dXJuIDAKICAgIGVsc2UKICAgICAgICBlY2hv
-IC1lICIke1lFTExPV30ke0JPTER95Y+v55So55qEIFBBSyDmlofku7Y6JHtOQ30iCiAgICAgICAg
-Zm9yIGkgaW4gIiR7IXBha19maWxlc1tAXX0iOyBkbwogICAgICAgICAgICBlY2hvIC1lICIke01B
-R0VOVEF9JHtCSUdfRk9OVH0kKChpKzEpKSkgJHtwYWtfZmlsZXNbaV0jIyovfSR7TkN9IgogICAg
-ICAgIGRvbmUKICAgICAgICByZWFkIC1wICLor7fovpPlhaXopoHpgInmi6nnmoQgUEFLIOaWh+S7
-tue8luWPtzogIiBmaWxlX2Nob2ljZQogICAgICAgIGlmIFtbICIkZmlsZV9jaG9pY2UiID1+IF5b
-MC05XSskIF1dICYmIFsgIiRmaWxlX2Nob2ljZSIgLWdlIDEgXSAmJiBbICIkZmlsZV9jaG9pY2Ui
-IC1sZSAiJHsjcGFrX2ZpbGVzW0BdfSIgXTsgdGhlbgogICAgICAgICAgICBzZWxlY3RlZF9wYWs9
-IiR7cGFrX2ZpbGVzW2ZpbGVfY2hvaWNlLTFdfSIKICAgICAgICAgICAgcmV0dXJuIDAKICAgICAg
-ICBlbHNlCiAgICAgICAgICAgIGVjaG8gLWUgIiR7UkVEfSR7Qk9MRH3ml6DmlYjpgInmi6nvvIEk
-e05DfSIKICAgICAgICAgICAgcmV0dXJuIDEKICAgICAgICBmaQogICAgZmkKfQoKcGFrX3VucGFj
-a19tZW51KCkgewogICAgY2xlYXIKICAgIGdyYWRpZW50X2hlYWRlcgogICAgZWNobyAtZSAiJHtD
-WUFOfSR7QklHX0ZPTlR9PT09PT09PSBQQUsg6Kej5YyFID09PT09PT0ke05DfSIKICAgIGdldF9w
-YWtfZmlsZXMKICAgIGlmIFsgJD8gLWVxIDEgXTsgdGhlbgogICAgICAgIHNsZWVwIDI7IG1haW5f
-bWVudTsgcmV0dXJuCiAgICBmaQoKICAgIGVjaG8gLWUgIiR7WUVMTE9XfSR7Qk9MRH3pgInmi6no
-p6PljIXmlrnlvI86JHtOQ30iCiAgICBlY2hvIC1lICIke0dSRUVOfSR7Qk9MRH0xKSBkYXTop6Pl
-jIUke05DfSIKICAgIGVjaG8gLWUgIiR7R1JFRU59JHtCT0xEfTIpIHVleHDop6PljIUke05DfSIK
-ICAgIGVjaG8gLWUgIiR7R1JFRU59JHtCT0xEfTMpIOi/lOWbnuS4u+iPnOWNlSR7TkN9IgogICAg
-cmVhZCAtcCAi6K+36L6T5YWl6YCJ6aG5ICgxLTMpOiAiIHVucGFja19jaG9pY2UKCiAgICBpZiBb
-ICIkdW5wYWNrX2Nob2ljZSIgLWVxIDEgXTsgdGhlbgogICAgICAgIG91dHB1dF9kaXI9Ii4v6Kej
-5YyFZGF0IgogICAgICAgIGVjaG8gLWUgIiR7Q1lBTn0ke0JPTER95q2j5Zyo5L2/55SoIFF1aWNr
-Qk1TIOino+WMhSAke3NlbGVjdGVkX3Bha30g5YiwICR7b3V0cHV0X2Rpcn0uLi4ke05DfSIKICAg
-ICAgICBxZW11LWkzODYgLi90b29scy9xdWlja2JtcyAuL3Rvb2xzL+ino+WMhS5ibXMgIiRzZWxl
-Y3RlZF9wYWsiICIkb3V0cHV0X2RpciIKICAgICAgICBweXRob24zIC4vdG9vbHMvMQogICAgZWxp
-ZiBbICIkdW5wYWNrX2Nob2ljZSIgLWVxIDIgXTsgdGhlbgogICAgICAgIG91dHB1dF9kaXI9Ii4v
-6Kej5YyFdWV4cCIKICAgICAgICBlY2hvIC1lICIke0NZQU59JHtCT0xEfeato+WcqOS9v+eUqCBV
-UlBhY2sg6Kej5YyFICR7c2VsZWN0ZWRfcGFrfSDliLAgJHtvdXRwdXRfZGlyfS4uLiR7TkN9Igog
-ICAgICAgIC4vdG9vbHMvdXJwYWNrIC1hICIkc2VsZWN0ZWRfcGFrIiAiJG91dHB1dF9kaXIiCiAg
-ICAgICAgcHl0aG9uMyAuL3Rvb2xzLzMKICAgIGVsaWYgWyAiJHVucGFja19jaG9pY2UiIC1lcSAz
-IF07IHRoZW4KICAgICAgICBtYWluX21lbnUKICAgICAgICByZXR1cm4KICAgIGVsc2UKICAgICAg
-ICBlY2hvIC1lICIke1JFRH0ke0JPTER95peg5pWI6YCJ6aG577yB6K+36YeN5paw6YCJ5oup77yB
-JHtOQ30iCiAgICAgICAgc2xlZXAgMTsgcGFrX3VucGFja19tZW51CiAgICBmaQoKICAgIGVjaG8g
-LWUgIiR7R1JFRU59JHtCT0xEfeino+WMheWujOaIkO+8gSR7TkN9IgogICAgcmVhZCAtbiAxIC1z
-IC1wICIkKGVjaG8gLWUgJHtXSElURX0ke0JJR19GT05UfSLmjInku7vmhI/plK7ov5Tlm57kuLvo
-j5zljZUuLi4ke05DfSIpIgogICAgbWFpbl9tZW51Cn0KCnBha19wYWNrX21lbnUoKSB7CiAgICBj
-bGVhcgogICAgZ3JhZGllbnRfaGVhZGVyCiAgICBlY2hvIC1lICIke0NZQU59JHtCSUdfRk9OVH09
-PT09PT09IFBBSyDmiZPljIUgPT09PT09PSR7TkN9IgogICAgZ2V0X3Bha19maWxlcwogICAgaWYg
-WyAkPyAtZXEgMSBdOyB0aGVuCiAgICAgICAgc2xlZXAgMjsgbWFpbl9tZW51OyByZXR1cm4KICAg
-IGZpCgogICAgZWNobyAtZSAiJHtZRUxMT1d9JHtCT0xEfemAieaLqeaJk+WMheaWueW8jzoke05D
-fSIKICAgIGVjaG8gLWUgIiR7R1JFRU59JHtCT0xEfTEpIGRhdOaJk+WMhSR7TkN9IgogICAgZWNo
-byAtZSAiJHtHUkVFTn0ke0JPTER9MikgdWV4cOaJk+WMhSR7TkN9IgogICAgZWNobyAtZSAiJHtH
-UkVFTn0ke0JPTER9Mykg6L+U5Zue5Li76I+c5Y2VJHtOQ30iCiAgICByZWFkIC1wICLor7fovpPl
-haXpgInpobkgKDEtMyk6ICIgcGFja19jaG9pY2UKCiAgICBpZiBbICIkcGFja19jaG9pY2UiIC1l
-cSAxIF07IHRoZW4KICAgICAgICBpbnB1dF9kaXI9Ii4v5omT5YyFZGF0IgogICAgICAgIGVjaG8g
-LWUgIiR7Q1lBTn0ke0JPTER9ZGF05omT5YyFICR7c2VsZWN0ZWRfcGFrfS4uLiR7TkN9IgogICAg
-ICAgIHFlbXUtaTM4NiAuL3Rvb2xzL3F1aWNrYm1zIC13IC1yIC4vdG9vbHMv5omT5YyFLmJtcyAi
-JHNlbGVjdGVkX3BhayIgIiRpbnB1dF9kaXIiCiAgICBlbGlmIFsgIiRwYWNrX2Nob2ljZSIgLWVx
-IDIgXTsgdGhlbgogICAgICAgIGlucHV0X2Rpcj0iLi/miZPljIV1ZXhwIgogICAgICAgIGVjaG8g
-LWUgIiR7Q1lBTn0ke0JPTER9dWV4cOaJk+WMhSAke3NlbGVjdGVkX3Bha30uLi4ke05DfSIKICAg
-ICAgICAuL3Rvb2xzL3VycGFjayAtYSAtciAiJHNlbGVjdGVkX3BhayIgIiRpbnB1dF9kaXIiCiAg
-ICBlbGlmIFsgIiRwYWNrX2Nob2ljZSIgLWVxIDMgXTsgdGhlbgogICAgICAgIG1haW5fbWVudQog
-ICAgICAgIHJldHVybgogICAgZWxzZQogICAgICAgIGVjaG8gLWUgIiR7UkVEfSR7Qk9MRH3ml6Dm
-lYjpgInpobnvvIEke05DfSIKICAgICAgICBzbGVlcCAxOyBwYWtfcGFja19tZW51CiAgICBmaQoK
-ICAgIGVjaG8gLWUgIiR7R1JFRU59JHtCT0xEfeaJk+WMheWujOaIkO+8gSR7TkN9IgogICAgcmVh
-ZCAtbiAxIC1zIC1wICIkKGVjaG8gLWUgJHtXSElURX0ke0JJR19GT05UfSLmjInku7vmhI/plK7o
-v5Tlm57kuLvoj5zljZUuLi4ke05DfSIpIgogICAgbWFpbl9tZW51Cn0KCmJlYXV0aWZ5X21lbnUo
-KSB7CiAgICBjbGVhcgogICAgZ3JhZGllbnRfaGVhZGVyCiAgICBlY2hvIC1lICIke0NZQU59JHtC
-SUdfRk9OVH09PT09PT09IOS4gOmUrue+juWMliA9PT09PT09JHtOQ30iCiAgICBlY2hvIC1lICIk
-e1lFTExPV30ke0JPTER9MSkg6L295YW35q2m5Zmo5Yqo5L2c5YCN6ZWc562J562J576O5YyWJHtO
-Q30iCiAgICBlY2hvIC1lICIke1lFTExPV30ke0JPTER9Mikg5Lyq5a6e5L2T576O5YyWJHtOQ30i
-CiAgICBlY2hvIC1lICIke0dSRUVOfSR7Qk9MRH0zKSDov5Tlm57kuLvoj5zljZUke05DfSIKICAg
-IGVjaG8gLWUgIiR7Q1lBTn0ke0JJR19GT05UfT09PT09PT09PT09PT09PT09PT09PT09PSR7TkN9
-IgoKICAgIHJlYWQgLXAgIuivt+i+k+WFpemAiemhuSAoMS0zKTogIiBiZWF1dGlmeV9jaG9pY2UK
-ICAgIGNhc2UgJGJlYXV0aWZ5X2Nob2ljZSBpbgogICAgICAgIDEpIAogICAgICAgICAgICBlY2hv
-IC1lICIke0NZQU59JHtCT0xEfeato+WcqOaJp+ihjC4uLiR7TkN9IgogICAgICAgICAgICBweXRo
-b24zIC4vdG9vbHMvMgogICAgICAgICAgICBlY2hvIC1lICIke0dSRUVOfSR7Qk9MRH3miafooYzl
-rozmiJDvvIEke05DfSIKICAgICAgICAgICAgcmVhZCAtbiAxIC1zIC1wICIkKGVjaG8gLWUgJHtX
-SElURX0ke0JJR19GT05UfSLmjInku7vmhI/plK7ov5Tlm57kuLvoj5zljZUuLi4ke05DfSIpIgog
-ICAgICAgICAgICBtYWluX21lbnUKICAgICAgICAgICAgOzsKICAgICAgICAyKSAKICAgICAgICAg
-ICAgZWNobyAtZSAiJHtDWUFOfSR7Qk9MRH3mraPlnKjmiafooYwuLi4ke05DfSIKICAgICAgICAg
-ICAgcHl0aG9uMyAuL3Rvb2xzLzUKICAgICAgICAgICAgZWNobyAtZSAiJHtHUkVFTn0ke0JPTER9
-5omn6KGM5a6M5oiQ77yBJHtOQ30iCiAgICAgICAgICAgIHJlYWQgLW4gMSAtcyAtcCAiJChlY2hv
-IC1lICR7V0hJVEV9JHtCSUdfRk9OVH0i5oyJ5Lu75oSP6ZSu6L+U5Zue5Li76I+c5Y2VLi4uJHtO
-Q30iKSIKICAgICAgICAgICAgbWFpbl9tZW51CiAgICAgICAgICAgIDs7CiAgICAgICAgMykgbWFp
-bl9tZW51IDs7CiAgICAgICAgKikgCiAgICAgICAgICAgIGVjaG8gLWUgIiR7UkVEfSR7Qk9MRH3m
-l6DmlYjpgInpobnvvIHor7fph43mlrDpgInmi6nvvIEke05DfSIKICAgICAgICAgICAgYmVhdXRp
-ZnlfbWVudQogICAgICAgICAgICA7OwogICAgZXNhYwp9CgptYWluX21lbnUoKSB7CiAgICBjbGVh
-cgogICAgZ3JhZGllbnRfaGVhZGVyCiAgICBlY2hvIC1lICIke0NZQU59JHtCSUdfRk9OVH3iloji
-lojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojiloji
-lojilojilojilojilojilojilojilojilojilojilojilojilogke05DfSIKICAgIGVjaG8gLWUg
-IiR7WUVMTE9XfSR7Qk9MRH3iloggIDEpIFBBSyDop6PljIUgICAgICAgICAgICAgICAgICAgIOKW
-iCR7TkN9IgogICAgZWNobyAtZSAiJHtZRUxMT1d9JHtCT0xEfeKWiCAgMikgUEFLIOaJk+WMhSAg
-ICAgICAgICAgICAgICAgICAg4paIJHtOQ30iCiAgICBlY2hvIC1lICIke1lFTExPV30ke0JPTER9
-4paIICAzKSDkuIDplK7nvo7ljJYgICAgICAgICAgICAgICAgICAgIOKWiCR7TkN9IgogICAgZWNo
-byAtZSAiJHtXSElURX0ke0JPTER94paIICA0KSDpgIDlh7ogICAgICAgICAgICAgICAgICAgICAg
-ICDilogke05DfSIKICAgIGVjaG8gLWUgIiR7Q1lBTn0ke0JJR19GT05UfeKWiOKWiOKWiOKWiOKW
-iOKWiOKWiOKWiOKWiOKWiOKWiOKWiOKWiOKWiOKWiOKWiOKWiOKWiOKWiOKWiOKWiOKWiOKWiOKW
-iOKWiOKWiOKWiOKWiOKWiOKWiOKWiOKWiOKWiCR7TkN9IgoKICAgIHJlYWQgLXAgIuivt+i+k+WF
-pemAiemhuSAoMS00KTogIiBjaG9pY2UKICAgIGNhc2UgJGNob2ljZSBpbgogICAgICAgIDEpIHBh
-a191bnBhY2tfbWVudSA7OwogICAgICAgIDIpIHBha19wYWNrX21lbnUgOzsKICAgICAgICAzKSBi
-ZWF1dGlmeV9tZW51IDs7CiAgICAgICAgNCkgZWNobyAtZSAiJHtZRUxMT1d9JHtCT0xEfeWGjein
-ge+8gSR7TkN9IjsgZXhpdCAwIDs7CiAgICAgICAgKikgZWNobyAtZSAiJHtSRUR9JHtCT0xEfeaX
-oOaViOmAiemhue+8gSR7TkN9Ijsgc2xlZXAgMTsgbWFpbl9tZW51IDs7CiAgICBlc2FjCn0KCmlu
-aXRpYWxpemVfZm9sZGVycwptYWluX21lbnU=
-"""
-decoded_script = base64.b64decode(ENCODED_SCRIPT).decode('utf-8')
+#!/bin/bash
 
-subprocess.run(['bash', '-c', decoded_script])
+CYAN='\033[0;36m'
+MAGENTA='\033[1;35m'
+RED='\033[0;31m'
+GREEN='\033[1;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[1;34m'
+WHITE='\033[1;37m'
+BOLD='\033[1m'
+UNDERLINE='\033[4m'
+NC='\033[0m'
+
+BACKGROUND='\033[48;5;16m'
+TEXT_WHITE='\033[38;5;15m'
+TEXT_BLUE='\033[38;5;27m'
+BIG_FONT='\033[1;37m\033[1;4m'
+
+gradient_header() {
+    echo -e "${BACKGROUND}${TEXT_BLUE}${BIG_FONT}(づ ●─● )づ${NC}"
+    echo -e "${BACKGROUND}${TEXT_BLUE}${BIG_FONT}    和平精英美化制作工具    ${NC}"
+    echo -e "${BACKGROUND}${TEXT_BLUE}${BIG_FONT}==============================${NC}"
+}
+
+initialize_folders() {
+    mkdir -p ./pak ./tools ./解包dat ./解包uexp ./打包dat ./打包uexp
+}
+
+get_pak_files() {
+    pak_files=($(ls ./pak/*.pak 2>/dev/null))
+    if [ ${#pak_files[@]} -eq 0 ]; then
+        echo -e "${RED}${BOLD}当前没有 PAK 文件！${NC}"
+        return 1
+    elif [ ${#pak_files[@]} -eq 1 ]; then
+        selected_pak="${pak_files[0]}"
+        echo -e "${YELLOW}${BOLD}自动选择唯一的 PAK 文件: ${selected_pak##*/}${NC}"
+        return 0
+    else
+        echo -e "${YELLOW}${BOLD}可用的 PAK 文件:${NC}"
+        for i in "${!pak_files[@]}"; do
+            echo -e "${MAGENTA}${BIG_FONT}$((i+1))) ${pak_files[i]##*/}${NC}"
+        done
+        read -p "请输入要选择的 PAK 文件编号: " file_choice
+        if [[ "$file_choice" =~ ^[0-9]+$ ]] && [ "$file_choice" -ge 1 ] && [ "$file_choice" -le "${#pak_files[@]}" ]; then
+            selected_pak="${pak_files[file_choice-1]}"
+            return 0
+        else
+            echo -e "${RED}${BOLD}无效选择！${NC}"
+            return 1
+        fi
+    fi
+}
+
+pak_unpack_menu() {
+    clear
+    gradient_header
+    echo -e "${CYAN}${BIG_FONT}======= PAK 解包 =======${NC}"
+    get_pak_files
+    if [ $? -eq 1 ]; then
+        sleep 2; main_menu; return
+    fi
+
+    echo -e "${YELLOW}${BOLD}选择解包方式:${NC}"
+    echo -e "${GREEN}${BOLD}1) dat解包${NC}"
+    echo -e "${GREEN}${BOLD}2) uexp解包${NC}"
+    echo -e "${GREEN}${BOLD}3) 返回主菜单${NC}"
+    read -p "请输入选项 (1-3): " unpack_choice
+
+    if [ "$unpack_choice" -eq 1 ]; then
+        output_dir="./解包dat"
+        echo -e "${CYAN}${BOLD}正在使用 QuickBMS 解包 ${selected_pak} 到 ${output_dir}...${NC}"
+        qemu-i386 ./tools/quickbms ./tools/解包.bms "$selected_pak" "$output_dir"
+        python3 ./tools/1
+    elif [ "$unpack_choice" -eq 2 ]; then
+        output_dir="./解包uexp"
+        echo -e "${CYAN}${BOLD}正在使用 uexp 解包 ${selected_pak} 到 ${output_dir}...${NC}"
+        ./tools/5 -a "$selected_pak" "$output_dir"
+        python3 ./tools/3
+    elif [ "$unpack_choice" -eq 3 ]; then
+        main_menu
+        return
+    else
+        echo -e "${RED}${BOLD}无效选项！请重新选择！${NC}"
+        sleep 1; pak_unpack_menu
+    fi
+
+    echo -e "${GREEN}${BOLD}解包完成！${NC}"
+    read -n 1 -s -p "$(echo -e ${WHITE}${BIG_FONT}"按任意键返回主菜单...${NC}")"
+    main_menu
+}
+
+pak_pack_menu() {
+    clear
+    gradient_header
+    echo -e "${CYAN}${BIG_FONT}======= PAK 打包 =======${NC}"
+    get_pak_files
+    if [ $? -eq 1 ]; then
+        sleep 2; main_menu; return
+    fi
+
+    echo -e "${YELLOW}${BOLD}选择打包方式:${NC}"
+    echo -e "${GREEN}${BOLD}1) dat打包${NC}"
+    echo -e "${GREEN}${BOLD}2) uexp打包${NC}"
+    echo -e "${GREEN}${BOLD}3) 返回主菜单${NC}"
+    read -p "请输入选项 (1-3): " pack_choice
+
+    if [ "$pack_choice" -eq 1 ]; then
+        input_dir="./打包dat"
+        echo -e "${CYAN}${BOLD}dat打包 ${selected_pak}...${NC}"
+        qemu-i386 ./tools/quickbms -w -r ./tools/打包.bms "$selected_pak" "$input_dir"
+    elif [ "$pack_choice" -eq 2 ]; then
+        input_dir="./打包uexp"
+        echo -e "${CYAN}${BOLD}uexp打包 ${selected_pak}...${NC}"
+        ./tools/5 -a -r "$selected_pak" "$input_dir"
+    elif [ "$pack_choice" -eq 3 ]; then
+        main_menu
+        return
+    else
+        echo -e "${RED}${BOLD}无效选项！${NC}"
+        sleep 1; pak_pack_menu
+    fi
+
+    echo -e "${GREEN}${BOLD}打包完成！${NC}"
+    read -n 1 -s -p "$(echo -e ${WHITE}${BIG_FONT}"按任意键返回主菜单...${NC}")"
+    main_menu
+}
+
+beautify_menu() {
+    clear
+    gradient_header
+    echo -e "${CYAN}${BIG_FONT}======= 一键美化 =======${NC}"
+    echo -e "${YELLOW}${BOLD}1) 载具武器动作倍镜等等美化${NC}"
+    echo -e "${YELLOW}${BOLD}2) 伪实体美化${NC}"
+    echo -e "${GREEN}${BOLD}3) 返回主菜单${NC}"
+    echo -e "${CYAN}${BIG_FONT}========================${NC}"
+
+    read -p "请输入选项 (1-3): " beautify_choice
+    case $beautify_choice in
+        1) 
+            echo -e "${CYAN}${BOLD}正在执行...${NC}"
+            python3 ./tools/2
+            echo -e "${GREEN}${BOLD}执行完成！${NC}"
+            read -n 1 -s -p "$(echo -e ${WHITE}${BIG_FONT}"按任意键返回主菜单...${NC}")"
+            main_menu
+            ;;
+        2) 
+            echo -e "${CYAN}${BOLD}正在执行...${NC}"
+            python3 ./tools/4
+            echo -e "${GREEN}${BOLD}执行完成！${NC}"
+            read -n 1 -s -p "$(echo -e ${WHITE}${BIG_FONT}"按任意键返回主菜单...${NC}")"
+            main_menu
+            ;;
+        3) main_menu ;;
+        *) 
+            echo -e "${RED}${BOLD}无效选项！请重新选择！${NC}"
+            beautify_menu
+            ;;
+    esac
+}
+
+main_menu() {
+    clear
+    gradient_header
+    echo -e "${CYAN}${BIG_FONT}█████████████████████████████████${NC}"
+    echo -e "${YELLOW}${BOLD}█  1) PAK 解包                    █${NC}"
+    echo -e "${YELLOW}${BOLD}█  2) PAK 打包                    █${NC}"
+    echo -e "${YELLOW}${BOLD}█  3) 一键美化                    █${NC}"
+    echo -e "${WHITE}${BOLD}█  4) 退出                        █${NC}"
+    echo -e "${CYAN}${BIG_FONT}█████████████████████████████████${NC}"
+
+    read -p "请输入选项 (1-4): " choice
+    case $choice in
+        1) pak_unpack_menu ;;
+        2) pak_pack_menu ;;
+        3) beautify_menu ;;
+        4) echo -e "${YELLOW}${BOLD}再见！${NC}"; exit 0 ;;
+        *) echo -e "${RED}${BOLD}无效选项！${NC}"; sleep 1; main_menu ;;
+    esac
+}
+
+initialize_folders
+main_menu
