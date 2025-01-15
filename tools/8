@@ -69,7 +69,7 @@ pak_unpack_menu() {
     if [ "$unpack_choice" -eq 1 ]; then
         output_dir="./解包dat"
         echo -e "${CYAN}${BOLD}正在使用 QuickBMS 解包 ${selected_pak} 到 ${output_dir}...${NC}"
-        qemu-i386 ./tools/quickbms ./tools/解包.bms "$selected_pak" "$output_dir"
+        qemu-i386 ./tools/7 ./tools/6 "$selected_pak" "$output_dir"
         python3 ./tools/1
     elif [ "$unpack_choice" -eq 2 ]; then
         output_dir="./解包uexp"
@@ -107,7 +107,7 @@ pak_pack_menu() {
     if [ "$pack_choice" -eq 1 ]; then
         input_dir="./打包dat"
         echo -e "${CYAN}${BOLD}dat打包 ${selected_pak}...${NC}"
-        qemu-i386 ./tools/quickbms -w -r ./tools/打包.bms "$selected_pak" "$input_dir"
+        qemu-i386 ./tools/7 -w -r ./tools/6 "$selected_pak" "$input_dir"
     elif [ "$pack_choice" -eq 2 ]; then
         input_dir="./打包uexp"
         echo -e "${CYAN}${BOLD}uexp打包 ${selected_pak}...${NC}"
